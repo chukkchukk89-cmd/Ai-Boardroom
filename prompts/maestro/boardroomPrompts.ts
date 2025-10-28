@@ -1,5 +1,5 @@
 // prompts/maestro/boardroomPrompts.ts
-import { Type } from '@google/genai';
+import { Content, Part } from '@google/generative-ai';
 import { OutputFormat } from '../../types';
 
 const getFinalSynthesisSystemInstruction = (format: OutputFormat): string => {
@@ -26,18 +26,18 @@ const getFinalSynthesisSystemInstruction = (format: OutputFormat): string => {
 const getFinalSynthesisSchema = (format: OutputFormat) => {
     if (format === 'JSON') {
         return {
-            type: Type.OBJECT,
+            type: "OBJECT",
             properties: {
-                title: { type: Type.STRING },
-                summary: { type: Type.STRING },
-                keyDecisions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                title: { type: "STRING" },
+                summary: { type: "STRING" },
+                keyDecisions: { type: "ARRAY", items: { type: "STRING" } },
                 actionItems: {
-                    type: Type.ARRAY,
+                    type: "ARRAY",
                     items: {
-                        type: Type.OBJECT,
+                        type: "OBJECT",
                         properties: {
-                            task: { type: Type.STRING },
-                            assignee: { type: Type.STRING },
+                            task: { type: "STRING" },
+                            assignee: { type: "STRING" },
                         },
                         required: ['task', 'assignee'],
                     },
@@ -63,9 +63,9 @@ export const MAESTRO_BOARDROOM_PROMPTS = {
 - Your output must be ONLY a single JSON object with a key "itinerary" which is an array of strings.
 - Do not add any conversational text.`,
     schema: {
-      type: Type.OBJECT,
+      type: "OBJECT",
       properties: {
-        itinerary: { type: Type.ARRAY, items: { type: Type.STRING } },
+        itinerary: { type: "ARRAY", items: { type: "STRING" } },
       },
       required: ["itinerary"],
     }
@@ -77,7 +77,6 @@ export const MAESTRO_BOARDROOM_PROMPTS = {
   FINAL_SYNTHESIS: (format: OutputFormat) => ({
       systemInstruction: getFinalSynthesisSystemInstruction(format),
       schema: getFinalSynthesisSchema(format),
-      responseMimeType: format === 'JSON' ? 'application/json' : undefined,
   }),
   
   /**
@@ -118,21 +117,20 @@ export const MAESTRO_BOARDROOM_PROMPTS = {
   ANALYZE_CONVERSATION_HEALTH: {
     systemInstruction: `You are the Maestro, a master facilitator. Analyze the last 10 turns of this conversation. Is the discussion productive? Is it stuck in a loop? Is it lacking creativity? Based on your analysis, recommend a new set of reasoning weights (milestone, criticalThinking, innovation) to improve the conversation's health. Your output must be ONLY a single JSON object with a 'reasoning' string and a 'newWeights' object. The weights must sum to 1.`,
     schema: {
-        type: Type.OBJECT,
+        type: "OBJECT",
         properties: {
-            reasoning: { type: Type.STRING, description: "A brief, 1-sentence explanation for the change." },
+            reasoning: { type: "STRING", description: "A brief, 1-sentence explanation for the change." },
             newWeights: {
-                type: Type.OBJECT,
+                type: "OBJECT",
                 properties: {
-                    milestone: { type: Type.NUMBER, description: "Value between 0 and 1" },
-                    criticalThinking: { type: Type.NUMBER, description: "Value between 0 and 1" },
-                    innovation: { type: Type.NUMBER, description: "Value between 0 and 1" },
+                    milestone: { type: "NUMBER", description: "Value between 0 and 1" },
+                    criticalThinking: { type: "NUMBER", description: "Value between 0 and 1" },
+                    innovation: { type: "NUMBER", description: "Value between 0 and 1" },
                 },
                 required: ['milestone', 'criticalThinking', 'innovation'],
             },
         },
         required: ['reasoning', 'newWeights'],
     },
-    responseMimeType: 'application/json',
   },
 };

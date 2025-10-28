@@ -20,8 +20,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload, disabl
         const content = await readFileAsText(file);
         uploadedFiles.push({
           id: `${file.name}-${Date.now()}`,
-          name: file.name,
-          type: file.type,
+          fileName: file.name,
           size: file.size,
           content: content,
         });
@@ -57,7 +56,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileUpload, disabl
     e.stopPropagation();
     setIsDragging(false);
     if (!disabled) {
-      handleFiles(e.dataTransfer.files);
+      handleFiles(.dataTransfer.files);
     }
   }, [disabled, handleFiles]);
   

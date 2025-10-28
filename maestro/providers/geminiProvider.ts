@@ -8,7 +8,7 @@ export class GeminiProvider implements LLMProvider {
 
   constructor() {
     // This assumes the API key is available in the environment.
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    this.ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY! });
   }
 
   async generateContent(request: LLMRequest): Promise<LLMResponse> {

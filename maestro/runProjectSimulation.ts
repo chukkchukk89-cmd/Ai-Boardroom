@@ -103,7 +103,7 @@ ${d.content}
     `).join('\n\n');
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY! });
         const promptConfig = MAESTRO_PROJECT_PROMPTS.FINAL_SYNTHESIS;
         const result = await ai.models.generateContent({
             model: maestro.model.modelName,

@@ -1,5 +1,4 @@
-// Fix: Provides constant values used throughout the application, such as voice options.
-import { AppMode } from './types';
+import { AppMode, ModelConfig } from './types';
 
 export const VOICE_OPTIONS = [
   { value: 'Kore', name: 'Kore (Female)' },
@@ -7,6 +6,14 @@ export const VOICE_OPTIONS = [
   { value: 'Charon', name: 'Charon (Male)' },
   { value: 'Fenrir', name: 'Fenrir (Male)' },
   { value: 'Zephyr', name: 'Zephyr (Female)' },
+];
+
+export const AVATARS = ['👑', '🧐', '💻', '🤖', '🧠', '🚀', '💡'];
+
+export const MODEL_OPTIONS: ModelConfig[] = [
+    { provider: 'OpenAI', modelName: 'gpt-4-turbo-preview' },
+    { provider: 'OpenAI', modelName: 'gpt-3.5-turbo' },
+    { provider: 'Google', modelName: 'gemini-pro' },
 ];
 
 export const MODE_INFO: Record<AppMode, { title: string; description: string; pro_cases: string[]; creative_cases: string[] }> = {
@@ -66,7 +73,7 @@ export const MODE_INFO: Record<AppMode, { title: string; description: string; pr
       "Testing different coding approaches for efficiency and clarity."
     ],
     creative_cases: [
-      "Finally settling the 'pineapple on pizza' debate by having two bots give their most compelling arguments.",
+      "Finally settling the 'pineapple on pizza' debate by a  nd two bots give their most compelling arguments.",
       "Comparing which model tells better (or worse) dad jokes.",
       "Seeing whether a 'creative' model or a 'logical' model writes a better love poem."
     ]

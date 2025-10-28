@@ -1,27 +1,25 @@
-// Fix: Creates a functional audio playback component for TTS.
+// Displays the audio playback bar.
 import React from 'react';
-import { StopIcon } from './Icons';
+import { Speaker } from '../hooks/useSimulation';
 
 interface AudioPlaybackBarProps {
-  speaker: { role: string; avatar: string; } | null;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
+    speaker: Speaker | null;
+    isPlaying: boolean;
+    onTogglePlay: () => void;
 }
 
 export const AudioPlaybackBar: React.FC<AudioPlaybackBarProps> = ({ speaker, isPlaying, onTogglePlay }) => {
-  if (!isPlaying || !speaker) return null;
-
-  return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 backdrop-blur-sm border border-gray-700 p-3 rounded-full flex items-center gap-4 text-white z-30 shadow-lg">
-      <div className="flex items-center gap-3">
-        <div className="text-2xl w-8 h-8 flex items-center justify-center">{speaker.avatar}</div>
-        <div>
-            <p className="text-sm font-semibold">{speaker.role} is speaking...</p>
+    return (
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 flex items-center justify-center gap-4 text-white">
+            {speaker && (
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl">{speaker.avatar}</span>
+                    <span className="font-bold">{speaker.role} is speaking...</span>
+                </div>
+            )}
+            <button onClick={onTogglePlay} className="text-2xl">
+                {isPlaying ? '❚❚' : '▶'}
+            </button>
         </div>
-      </div>
-      <button onClick={onTogglePlay} className="p-2 w-10 h-10 flex items-center justify-center bg-red-500/80 hover:bg-red-500 rounded-full">
-        <StopIcon />
-      </button>
-    </div>
-  );
+    );
 };

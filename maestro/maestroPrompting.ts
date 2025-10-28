@@ -49,12 +49,12 @@ const getPromptBuilder = (mode: MaestroPromptContext['mode']): ((context: Maestr
  * A dedicated function to generate speech from text using the Gemini TTS model.
  */
 const generateSpeech = async (text: string, voice: string): Promise<string | undefined> => {
-    if (!process.env.API_KEY) {
+    if (!import.meta.env.VITE_API_KEY) {
         console.error("Cannot generate speech: Gemini API Key is not configured.");
         return undefined;
     }
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text }] }],

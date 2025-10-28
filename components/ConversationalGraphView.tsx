@@ -1,12 +1,11 @@
-// Fix: Creates a 3D visualization of the conversational graph.
+// Creates a 3D visualization of the conversational graph.
 import React, { useMemo, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, Html, Line } from '@react-three/drei';
-// Fix: Use named imports for THREE members to resolve namespace-related type errors.
 import { Mesh, Vector3, MathUtils, Group as ThreeGroup } from 'three';
 import { Agent } from '../types';
 
-// Fix: Workaround for JSX intrinsic element type errors when @react-three/fiber's type augmentations are not being picked up by TypeScript.
+// Workaround for JSX intrinsic element type errors when @react-three/fiber's type augmentations are not being picked up by TypeScript.
 const Group = 'group' as any;
 const MeshStandardMaterial = 'meshStandardMaterial' as any;
 const MeshBasicMaterial = 'meshBasicMaterial' as any;
@@ -56,7 +55,6 @@ const MemoryNodes: React.FC<{ count: number; isLowPowerMode: boolean; }> = ({ co
 
 
 const AgentNode: React.FC<{ agent: Agent; position: [number, number, number]; isActive: boolean; isLowPowerMode: boolean; }> = ({ agent, position, isActive, isLowPowerMode }) => {
-  // Fix: Changed type from THREE.Mesh to Mesh.
   const meshRef = useRef<Mesh>(null!);
   
   useFrame((_state, delta) => {
@@ -67,7 +65,6 @@ const AgentNode: React.FC<{ agent: Agent; position: [number, number, number]; is
     if (isActive && agent.status === 'working') {
        meshRef.current.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.1);
     } else {
-       // Fix: Changed THREE.Vector3 to Vector3.
        meshRef.current.scale.lerp(new Vector3(1, 1, 1), delta * 5);
     }
   });
@@ -97,7 +94,6 @@ const ConnectionLine: React.FC<{ start: [number, number, number], end: [number, 
     const ref = useRef<any>(null);
     useFrame(() => {
         if(ref.current && !isLowPowerMode) {
-            // Fix: Changed THREE.MathUtils.lerp to MathUtils.lerp.
             ref.current.material.opacity = MathUtils.lerp(ref.current.material.opacity, 0, 0.05);
         }
     });

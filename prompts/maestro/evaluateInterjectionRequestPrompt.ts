@@ -3,7 +3,7 @@
  * This determines if the interruption is warranted.
  * [cite: Weighted Response & Memory Reference (Speculative).PDF]
  */
-import { Type } from '@google/genai';
+import { GenerationConfig, GoogleGenerativeAI } from '@google/generative-ai';
 import { Agent, SessionLogEntry } from '../../types';
 
 export interface InterjectionEvaluationContext {
@@ -30,17 +30,16 @@ You are the Maestro, the meeting facilitator. An agent has requested to interrup
 
 **Your Response:**
 You must respond with ONLY a single JSON object with two keys:
-1.  "grantInterjection": A boolean (\`true\` or \`false\`).
+1.  "grantInterjection": A boolean (`true` or `false`)
 2.  "maestroResponse": A concise, conversational string explaining your decision (e.g., "Hold that thought, Technical Expert. Market Analyst, please finish your point first." or "A valid point, Risk Manager. Please go ahead.").
     `.trim(),
     schema: {
-      type: Type.OBJECT,
+      type: "OBJECT",
       properties: {
-        grantInterjection: { type: Type.BOOLEAN },
-        maestroResponse: { type: Type.STRING },
+        grantInterjection: { type: "BOOLEAN" },
+        maestroResponse: { type: "STRING" },
       },
       required: ["grantInterjection", "maestroResponse"],
     },
-    responseMimeType: 'application/json',
   };
 };
