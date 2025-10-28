@@ -1,48 +1,89 @@
-// Fix: Added a placeholder implementation for the RAGService.
+// Fix: Replaced the placeholder implementation with a production-ready Typesense integration.
 import { UploadedFile } from '../types';
 import { chunkText } from './chunking';
-import { createEmbedding, queryVectorStore, Vector } from './vectorUtils';
+import { createEmbedding } from './vectorUtils';
 import { v4 as uuidv4 } from 'uuid';
+import Typesense from 'typesense';
+import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 /**
  * A service to manage the Retrieval-Augmented Generation (RAG) process.
  * This service is responsible for processing uploaded files, creating vector embeddings,
- * storing them, and retrieving relevant context for a given query.
+ * storing them in Typesense, and retrieving relevant context for a given query.
  */
 export class RAGService {
-  private vectorStore: Vector[] = [];
+  private client: Typesense.Client;
+  private collectionName: string;
   private isInitialized: boolean = false;
 
   constructor() {
-    console.log("RAGService initialized.");
+    // Initialize Typesense client
+    this.client = new Typesense.Client({
+      nodes: [
+        {
+          host: 'localhost', // Replace with your Typesense host
+          port: 8108,
+          protocol: 'http',
+        },
+      ],
+      apiKey: 'xyz', // Replace with your Typesense API key
+    });
+    this.collectionName = `rag_${uuidv4()}`.replace(/-/g, '_');
+  }
+
+  /**
+   * Initializes the RAG service by creating the necessary Typesense collection.
+   */
+  async init(): Promise<void> {
+    try {
+      // Delete the collection if it already exists
+      await this.client.collections(this.collectionName).delete();
+    } catch (error) {
+      // Collection does not exist, which is fine
+    }
+
+    const schema: CollectionCreateSchema = {
+      name: this.collectionName,
+      fields: [
+        { name: 'id', type: 'string' },
+        { name: 'embedding', type: 'float[]', num_dim: 768 }, // Assuming embedding dimension of 768
+        { name: 'text', type: 'string' },
+        { name: 'source', type: 'string' },
+      ],
+    };
+
+    await this.client.collections().create(schema);
+    this.isInitialized = true;
+    console.log(`Typesense collection '${this.collectionName}' created.`);
   }
 
   /**
    * Processes a list of uploaded files, chunks their content,
-   * creates embeddings, and adds them to the vector store.
+   * creates embeddings, and adds them to the Typesense collection.
    * @param files The files to process.
    */
   async addFiles(files: UploadedFile[]): Promise<void> {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+
     console.log(`Adding ${files.length} files to RAG context...`);
     for (const file of files) {
       // 1. Chunk the file content
       const chunks = chunkText(file.content, 1024, 128, file.name);
 
-      // 2. Create embeddings for each chunk
+      // 2. Create embeddings for each chunk and index in Typesense
       for (const chunk of chunks) {
         const embedding = await createEmbedding(chunk.content);
-        this.vectorStore.push({
+        await this.client.collections(this.collectionName).documents().create({
           id: uuidv4(),
-          values: embedding,
-          metadata: {
-            ...chunk.metadata,
-            text: chunk.content, // Store original text for retrieval
-          },
+          embedding: embedding,
+          text: chunk.content,
+          source: chunk.metadata.source,
         });
       }
     }
-    this.isInitialized = this.vectorStore.length > 0;
-    console.log(`RAG processing complete. Vector store contains ${this.vectorStore.length} vectors.`);
+    console.log(`RAG processing complete.`);
   }
 
   /**
@@ -60,19 +101,29 @@ export class RAGService {
     // 1. Create an embedding for the query
     const queryVector = await createEmbedding(query);
 
-    // 2. Query the vector store
-    const results = await queryVectorStore(queryVector, this.vectorStore, topK);
+    // 2. Query the Typesense collection
+    const searchResults = await this.client.collections(this.collectionName).documents().search({
+      q: '*',
+      vector_query: {
+        field: 'embedding',
+        vector: queryVector,
+        k: topK,
+      },
+    });
 
-    if (results.length === 0) {
+    if (!searchResults.hits || searchResults.hits.length === 0) {
       return null;
     }
 
     // 3. Format the results into a single context string
-    const contextString = results
-      .map((r, i) => `
---- Relevant Document Snippet ${i + 1} (Source: ${r.metadata.source}) ---
-${r.metadata.text}
-      `.trim())
+    const contextString = searchResults.hits
+      .map((hit, i) => {
+        const doc = hit.document as any;
+        return `
+--- Relevant Document Snippet ${i + 1} (Source: ${doc.source}) ---
+${doc.text}
+      `.trim();
+      })
       .join('\n\n');
 
     return contextString;
@@ -81,8 +132,12 @@ ${r.metadata.text}
   /**
    * Clears all processed data from the service.
    */
-  reset(): void {
-    this.vectorStore = [];
+  async reset(): Promise<void> {
+    try {
+      await this.client.collections(this.collectionName).delete();
+    } catch (error) {
+      // Ignore errors if collection doesn't exist
+    }
     this.isInitialized = false;
     console.log("RAGService has been reset.");
   }

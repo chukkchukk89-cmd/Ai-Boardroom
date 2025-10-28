@@ -1,7 +1,14 @@
 // This utility converts text to speech using the Google TTS API.
 import { Speaker } from '../hooks/useSimulation';
+import { getApiKey } from '../apiKeys';
 
-export const playText = async (text: string, speaker: Speaker, apiKey: string, onEnd: () => void) => {
+export const playText = async (text: string, speaker: Speaker, onEnd: () => void) => {
+    const apiKey = getApiKey('Gemini');
+    if (!apiKey) {
+        console.error("Cannot play text: Gemini API Key is not configured.");
+        return;
+    }
+
     const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
         method: 'POST',
         headers: {
@@ -9,7 +16,7 @@ export const playText = async (text: string, speaker: Speaker, apiKey: string, o
         },
         body: JSON.stringify({
             input: { text },
-            voice: { languageCode: 'en-US', name: 'en-US-Wavenet-D', ssmlGender: 'MALE' },
+            voice: { languageCode: 'en-US', name: speaker.voice },
             audioConfig: { audioEncoding: 'MP3' },
         }),
     });

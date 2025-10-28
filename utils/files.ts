@@ -1,4 +1,10 @@
 export const readFileAsText = (file: File): Promise<string> => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    if (file.size > MAX_FILE_SIZE) {
+        return Promise.reject(new Error('File size exceeds the 10MB limit'));
+    }
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {

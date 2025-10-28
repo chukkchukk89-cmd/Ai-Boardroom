@@ -6,6 +6,7 @@ import { constructBoardroomPrompt, buildProjectTurnPrompt, constructSandboxPromp
 // Fix: Imported LLMResponse from the correct source file where it is defined.
 import { LLMProvider, LLMRequest, GeminiProvider, UnsupportedProvider, LLMResponse } from './providers';
 import { GoogleGenAI, Modality } from '@google/genai';
+import { getApiKey } from '../apiKeys';
 
 // Extend the response to include optional audio data
 // Fix: Extended the correct LLMResponse type, giving AgentLLMResponse the 'text' property.
@@ -49,12 +50,13 @@ const getPromptBuilder = (mode: MaestroPromptContext['mode']): ((context: Maestr
  * A dedicated function to generate speech from text using the Gemini TTS model.
  */
 const generateSpeech = async (text: string, voice: string): Promise<string | undefined> => {
-    if (!import.meta.env.VITE_API_KEY) {
+    const apiKey = getApiKey('Gemini');
+    if (!apiKey) {
         console.error("Cannot generate speech: Gemini API Key is not configured.");
         return undefined;
     }
     try {
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text }] }],

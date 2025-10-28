@@ -5,6 +5,49 @@
  * [cite: defaultProject.ts, Maestro's Cognitive Model.PDF]
  */
 
+const instructions = {
+  ArchitectBot: `
+- **Focus:** System design, API architecture, and scalability.
+- **Task:** Define the data models, API schemas, and overall structural logic.
+- **Output:** Your deliverable should be technical (e.g., JSON schemas, system diagrams as text, API endpoint definitions).
+  `.trim(),
+  CodeSmith: `
+- **Focus:** Implementation, integration, and debugging.
+- **Task:** Write clean, functional, and efficient code.
+- **Output:** Your deliverable must be primarily code blocks (Typescript/React) that directly implement the required features.
+  `.trim(),
+  UXAndDesign: `
+- **Focus:** User experience, interaction design, and visual layout.
+- **Task:** Describe the user's journey, component layout, and interaction patterns.
+- **Output:** Your deliverable should be descriptive text outlining the UI/UX (e.g., "The user first sees a modal..."), user flow logic, or accessibility guidelines.
+  `.trim(),
+  AudioBot: `
+- **Focus:** TTS integration, voice selection, and audio playback.
+- **Task:** Detail the logic for audio integration.
+- **Output:** Your deliverable should be technical descriptions of API integration steps, audio processing logic, or voice selection criteria.
+  `.trim(),
+  StrategistBot: `
+- **Focus:** Milestone planning, dependency management, and dynamic allocation.
+- **Task:** Analyze the project's "why" and "when."
+- **Output:** Your deliverable should be focused on planning, risk analysis, dependency mapping, or timeline adjustments.
+  `.trim(),
+  QABot: `
+- **Focus:** Testing, optimization, and bug reporting.
+- **Task:** Critically analyze the system to find flaws and suggest improvements.
+- **Output:** Your deliverable should be a list of test cases, detailed bug reports, or performance benchmark criteria.
+  `.trim(),
+  Maestro: `
+- **Focus:** Orchestration, synthesis, and progress tracking.
+- **Task:** Your role in this milestone is to synthesize outputs or manage other agents.
+- **Output:** Your deliverable should be a high-level summary, a status update, or clear instructions for the *next* steps.
+  `.trim(),
+  default: `
+- **Focus:** Your core expertise.
+- **Task:** Provide your best expert contribution to the milestone.
+- **Output:** Your deliverable should be a professional, expert-level response.
+  `.trim(),
+};
+
 /**
  * Returns a block of role-specific instructions based on the agent's ID.
  * @param agentId The agent's ID (e.g., "ArchitectBot", "CodeSmith")
@@ -12,81 +55,34 @@
  */
 export const getRoleSpecificGuidance = (agentId: string): string => {
   const guidanceHeader = `### YOUR ROLE-SPECIFIC GUIDANCE (Read Carefully) ###`;
-  let instructions = '';
+  let instruction = '';
 
   switch (agentId) {
     case 'ArchitectBot':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** System design, API architecture, and scalability.
-- **Task:** Define the data models, API schemas, and overall structural logic.
-- **Output:** Your deliverable should be technical (e.g., JSON schemas, system diagrams as text, API endpoint definitions).
-      `.trim();
+      instruction = instructions.ArchitectBot;
       break;
-    
     case 'CodeSmith':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** Implementation, integration, and debugging.
-- **Task:** Write clean, functional, and efficient code.
-- **Output:** Your deliverable must be primarily code blocks (Typescript/React) that directly implement the required features.
-      `.trim();
+      instruction = instructions.CodeSmith;
       break;
-    
     case 'UXBot':
     case 'DesignBot':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** User experience, interaction design, and visual layout.
-- **Task:** Describe the user's journey, component layout, and interaction patterns.
-- **Output:** Your deliverable should be descriptive text outlining the UI/UX (e.g., "The user first sees a modal..."), user flow logic, or accessibility guidelines.
-      `.trim();
+      instruction = instructions.UXAndDesign;
       break;
-
     case 'AudioBot':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** TTS integration, voice selection, and audio playback.
-- **Task:** Detail the logic for audio integration.
-- **Output:** Your deliverable should be technical descriptions of API integration steps, audio processing logic, or voice selection criteria.
-      `.trim();
+      instruction = instructions.AudioBot;
       break;
-
     case 'StrategistBot':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** Milestone planning, dependency management, and dynamic allocation.
-- **Task:** Analyze the project's "why" and "when."
-- **Output:** Your deliverable should be focused on planning, risk analysis, dependency mapping, or timeline adjustments.
-      `.trim();
+      instruction = instructions.StrategistBot;
       break;
-
     case 'QABot':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** Testing, optimization, and bug reporting.
-- **Task:** Critically analyze the system to find flaws and suggest improvements.
-- **Output:** Your deliverable should be a list of test cases, detailed bug reports, or performance benchmark criteria.
-      `.trim();
+      instruction = instructions.QABot;
       break;
-    
     case 'Maestro':
-      // [cite: defaultProject.ts]
-      instructions = `
-- **Focus:** Orchestration, synthesis, and progress tracking.
-- **Task:** Your role in this milestone is to synthesize outputs or manage other agents.
-- **Output:** Your deliverable should be a high-level summary, a status update, or clear instructions for the *next* steps.
-      `.trim();
+      instruction = instructions.Maestro;
       break;
-
     default:
-      // Generic fallback for any other agent
-      instructions = `
-- **Focus:** Your core expertise.
-- **Task:** Provide your best expert contribution to the milestone.
-- **Output:** Your deliverable should be a professional, expert-level response.
-      `.trim();
+      instruction = instructions.default;
   }
 
-  return `${guidanceHeader}\n${instructions}`;
+  return `${guidanceHeader}\n${instruction}`;
 };

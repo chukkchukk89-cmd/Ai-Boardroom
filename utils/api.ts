@@ -1,7 +1,7 @@
 // Creates and exports an API client for agent-related operations.
 import { Agent, Role, UploadedFile } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 async function* streamGenerator(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncGenerator<any, void, undefined> {
     const decoder = new TextDecoder();
