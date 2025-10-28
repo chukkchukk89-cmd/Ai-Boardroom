@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Boardroom</title>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "three": "https://aistudiocdn.com/three@^0.166.1",
+    "@react-three/fiber": "https://aistudiocdn.com/@react-three/fiber@^8.16.8",
+    "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^9.108.3",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "uuid": "https://aistudiocdn.com/uuid@^13.0.0"
+  }
+}
+</script>
+  <style>
+    body { margin: 0; background-color: #111827; color: white; font-family: sans-serif; }
+    #root { width: 100vw; height: 100vh; }
+    .agent-label {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    @keyframes bloom {
+      0% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.5); }
+      50% { box-shadow: 0 0 20px 5px rgba(168, 85, 247, 0.8); }
+      100% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.5); }
+    }
+    .animate-bloom {
+      animation: bloom 1.5s ease-in-out;
+    }
+  </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
