@@ -1,13 +1,13 @@
 
 // Fix: Implements the simulation logic for Project Mode.
-import { Agent, ProjectData, SessionLogEntry, TaskStatus, Milestone } from '../types';
-import { generateAgentResponse, AgentLLMResponse, constructMaestroPrompt } from './maestroPrompting';
+import { Agent, ProjectData, TaskStatus, Milestone } from '../types';
+import { generateAgentResponse, AgentLLMResponse } from './maestroPrompting';
 import { MAESTRO_PROJECT_PROMPTS } from '../prompts';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface StateUpdate {
   log?: { role: string; avatar: string; content: string; };
-  agentStatus?: { agentId: string; status: 'idle' | 'working' | 'done'; task: string | null };
+  agentStatus?: { agentId: string; status: 'idle' | 'working' | 'done' | 'error'; task: string | null };
   milestoneStatus?: { milestoneId: string; status: TaskStatus };
   finalDocument?: string;
 }
@@ -33,7 +33,6 @@ export async function runProjectSimulation(
   const allDeliverables: { milestone: string; agent: string; content: string }[] = [];
   const maestro = agents.find(a => a.role === 'Maestro')!;
   
-  // Sort milestones based on dependencies
   const sortedMilestones = sortMilestones(projectData.milestones);
 
   for (const milestone of sortedMilestones) {
@@ -49,47 +48,56 @@ export async function runProjectSimulation(
 
     const assignedAgents = agents.filter(a => milestone.assignedAgents.includes(a.agentId) || milestone.assignedAgents.includes(a.role));
 
-    for (const agent of assignedAgents) {
-      if (!sessionControl.current.isRunning) break;
-      
-      const taskDescription = `Contribute to '${milestone.name}': ${milestone.objective}`;
-      updateState({ agentStatus: { agentId: agent.id, status: 'working', task: taskDescription } });
-
-      const context = {
-        mode: 'Project',
-        agent,
-        agents,
-        userName: 'User',
-        sessionGoal: projectData.goal,
-        currentMilestone: milestone,
-        lastTurns: [], // Simplified for now, could pass recent logs
-      };
-
-      try {
-        const response: AgentLLMResponse = await generateAgentResponse(context as any, "Generate your deliverable for the current milestone.", 0.7);
+    const agentPromises = assignedAgents.map(async (agent) => {
+        if (!sessionControl.current.isRunning) return null;
         
-        allDeliverables.push({
-            milestone: milestone.name,
-            agent: agent.role,
-            content: response.text
-        });
+        const taskDescription = `Contribute to '${milestone.name}': ${milestone.objective}`;
+        updateState({ agentStatus: { agentId: agent.id, status: 'working', task: taskDescription } });
 
-        updateState({ log: { role: agent.role, avatar: agent.avatar, content: response.text } });
-        updateState({ agentStatus: { agentId: agent.id, status: 'done', task: null } });
+        const context = {
+            mode: 'Project',
+            agent,
+            agents,
+            userName: 'User',
+            sessionGoal: projectData.goal,
+            currentMilestone: milestone,
+            lastTurns: [],
+        };
 
-      } catch (error) {
-        console.error(`Error with agent ${agent.role}:`, error);
-        const errorMessage = `Agent ${agent.role} encountered an error. Skipping task.`;
-        updateState({ log: { role: 'Maestro', avatar: '👑', content: errorMessage } });
-        updateState({ agentStatus: { agentId: agent.id, status: 'error', task: null } });
-      }
-    }
+        try {
+            const response: AgentLLMResponse = await generateAgentResponse(context as any, "Generate your deliverable for the current milestone.", 0.7);
+            
+            updateState({ log: { role: agent.role, avatar: agent.avatar, content: response.text } });
+            updateState({ agentStatus: { agentId: agent.id, status: 'done', task: null } });
+
+            return {
+                milestone: milestone.name,
+                agent: agent.role,
+                content: response.text
+            };
+
+        } catch (error) {
+            console.error(`Error with agent ${agent.role}:`, error);
+            const errorMessage = `Agent ${agent.role} encountered an error. Skipping task.`;
+            updateState({ log: { role: 'Maestro', avatar: '👑', content: errorMessage } });
+            updateState({ agentStatus: { agentId: agent.id, status: 'error', task: null } });
+            return null;
+        }
+    });
+
+    const results = await Promise.all(agentPromises);
+    results.forEach(result => {
+        if (result) {
+            allDeliverables.push(result);
+        }
+    });
     
-    updateState({ milestoneStatus: { milestoneId: milestone.milestoneId, status: 'done' } });
+    if (sessionControl.current.isRunning) {
+        updateState({ milestoneStatus: { milestoneId: milestone.milestoneId, status: 'done' } });
+    }
   }
 
   if (sessionControl.current.isRunning) {
-    // Final Synthesis Step
     updateState({ log: { role: 'Maestro', avatar: '👑', content: "All milestones complete. Synthesizing final document..." } });
     updateState({ agentStatus: { agentId: maestro.id, status: 'working', task: "Synthesizing final document" } });
     
@@ -103,28 +111,37 @@ ${d.content}
     `).join('\n\n');
 
     try {
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY! });
-        const promptConfig = MAESTRO_PROJECT_PROMPTS.FINAL_SYNTHESIS;
-        const result = await ai.models.generateContent({
+        const ai = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY!);
+        const model = ai.getGenerativeModel({
             model: maestro.model.modelName,
-            contents: `Project Goal: ${projectData.goal}\n\nCombined Agent Deliverables:\n${combinedDeliverables}`,
-            config: {
-                systemInstruction: promptConfig.systemInstruction,
-            },
+            systemInstruction: MAESTRO_PROJECT_PROMPTS.FINAL_SYNTHESIS.systemInstruction,
         });
+        
+        const streamResult = await model.generateContentStream(
+            `Project Goal: ${projectData.goal}\n\nCombined Agent Deliverables:\n${combinedDeliverables}`
+        );
 
-        updateState({ finalDocument: result.text });
-        updateState({ log: { role: 'Maestro', avatar: '👑', content: "Final project document generated." } });
+        let finalDocumentText = '';
+        for await (const chunk of streamResult.stream) {
+            if (!sessionControl.current.isRunning) break;
+            const chunkText = chunk.text();
+            finalDocumentText += chunkText;
+            updateState({ finalDocument: finalDocumentText });
+        }
+
+        if (sessionControl.current.isRunning) {
+            updateState({ log: { role: 'Maestro', avatar: '👑', content: "Final project document generated." } });
+        }
 
     } catch (error) {
          console.error(`Error with Maestro synthesis:`, error);
         const errorMessage = `Maestro encountered an error during final synthesis.`;
         updateState({ log: { role: 'Maestro', avatar: '👑', content: errorMessage } });
+    } finally {
+         updateState({ agentStatus: { agentId: maestro.id, status: 'done', task: null } });
     }
-     updateState({ agentStatus: { agentId: maestro.id, status: 'done', task: null } });
   }
 }
-
 
 function sortMilestones(milestones: Milestone[]): Milestone[] {
     const sorted: Milestone[] = [];
