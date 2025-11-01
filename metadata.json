@@ -1,0 +1,7 @@
+{
+  "name": "Ai Boardroom Complete?",
+  "description": "A multi-agent orchestration platform that lets a user manage AI councils for strategy, analysis, and collaborative problem-solving. The app supports text and real-time voice input/output for a seamless interactive experience.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
